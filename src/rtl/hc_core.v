@@ -136,27 +136,61 @@ module hc_core (
 
 
   //----------------------------------------------------------------
+  //
   //----------------------------------------------------------------
   always @*
-    begin : cipher_update
-      reg  [8 : 0]  j;
-      reg  [31 : 0] j_0;
-      reg  [31 : 0] j_3;
-      reg  [31 : 0] j_10;
-      reg  [31 : 0] j_511;
+    begin : state_update
+      reg  [8 : 0] j_000;
+      reg  [8 : 0] j_003;
+      reg  [8 : 0] j_010;
+      reg  [8 : 0] j_511;
 
-      j = i_reg[8 : 0];
+      reg [31 : 0] P_000;
+      reg [31 : 0] P_002;
+      reg [31 : 0] P_010;
+      reg [31 : 0] P_511;
+
+      reg [31 : 0] Q_000;
+      reg [31 : 0] Q_002;
+      reg [31 : 0] Q_010;
+      reg [31 : 0] Q_511;
+
+      // TODO: These indices are quite probably wrong. Fix.
+      j_000 = i_reg[8 : 0];
+      j_003 = i_reg[8 : 0] - 3;
+      j_010 = i_reg[8 : 0] - 10;
+      j_511 = i_reg[8 : 0] - 511;
+
+      P_addr = i_reg[8 : 0];
+      Q_addr = i_reg[8 : 0];
+
+      P_000 = P[j_000];
+      P_003 = P[j_003];
+      P_010 = P[j_010];
+      P_511 = P[j_511];
+
+      Q_000 = Q[j_000];
+      Q_003 = Q[j_003];
+      Q_010 = Q[j_010];
+      Q_511 = Q[j_511];
+
+      P_new = P_000 + g1(P_003, P_010, P_511)
+      Q_new = Q_000 + g2(Q_003, Q_010, Q_511)
 
       if (update)
-        if (init_mode)
-          begin
-
-          end
-        else
-          begin
-
-          end
-    end
+        begin
+          if (init_mode)
+            begin
+              // Init update.
+            end
+          else
+            begin
+              // Normal update.
+              Q_we = i_ctr_reg[9];
+              P_we = ~i_ctr_reg[9];
+            end
+        end
+    end // block: state_update
 
 
   //----------------------------------------------------------------
