@@ -66,6 +66,20 @@ module hc_core (
   endfunction // g2
 
 
+  function [31 : 0] h1(input [31 : 00] x);
+    begin
+      h1 = Q[{1'b0, x[7 : 0]}] + Q[{1'b1, x[23 : 16]}];
+    end
+  endfunction // h1
+
+
+  function [31 : 0] h1(input [31 : 00] x);
+    begin
+      h2 = P[{1'b0, x[7 : 0]}] + P[{1'b1, x[23 : 16]}];
+    end
+  endfunction // h2
+
+
   //----------------------------------------------------------------
   //----------------------------------------------------------------
   reg [31 : 0] P [0 : 511];
@@ -95,7 +109,8 @@ module hc_core (
 
   //----------------------------------------------------------------
   //----------------------------------------------------------------
-  reg update;
+  reg update_s;
+  reg update_state;
   reg init_mode;
 
 
@@ -136,7 +151,9 @@ module hc_core (
 
 
   //----------------------------------------------------------------
+  // state_update
   //
+  // Logic for updating the state tables P and Q.
   //----------------------------------------------------------------
   always @*
     begin : state_update
@@ -194,6 +211,49 @@ module hc_core (
 
 
   //----------------------------------------------------------------
+  // s_generate
+  //
+  // The keystream word s generation logic.
+  //----------------------------------------------------------------
+  always @*
+    begin : s_generate
+      reg  [8 : 0] j_000;
+      reg  [8 : 0] j_012;
+
+      reg [31 : 0] P_000;
+      reg [31 : 0] P_012;
+
+      reg [31 : 0] Q_000;
+      reg [31 : 0] Q_012;
+
+      // TODO: These indices are quite probably wrong. Fix.
+      j_000 = i_reg[8 : 0];
+      j_010 = i_reg[8 : 0] - 12;
+
+      P_000 = P[j_000];
+      P_511 = P[j_511];
+
+      Q_000 = Q[j_000];
+      Q_012 = Q[j_012];
+
+      P_new = P_000 + g1(P_003, P_010, P_511)
+      Q_new = Q_000 + g2(Q_003, Q_010, Q_511)
+
+      s_we = 1'b0;
+
+      if (update_s)
+        begin
+          s_we = 1'b1;
+
+          if (i_ctr_reg[9])
+            s_new = h2(Q_012) ^ Q_000;
+          else
+            s_new = h1(P_012) ^ P_000;
+        end
+    end
+
+
+  //----------------------------------------------------------------
   //----------------------------------------------------------------
   always @*
     begin : i_ctr
@@ -218,10 +278,11 @@ module hc_core (
   //----------------------------------------------------------------
   always @*
     begin : hc_ctrl
-      update    = 1'b0;
-      init_mode = 1'b0;
-      i_ctr_rst = 1'b0;
-      i_ctr_inc = 1'b0;
+      update_s     = 1'b0;
+      update_state = 1'b0;
+      init_mode    = 1'b0;
+      i_ctr_rst    = 1'b0;
+      i_ctr_inc    = 1'b0;
     end
 
 endmodule // hc_core
