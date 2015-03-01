@@ -86,6 +86,12 @@ module hc_core (
   reg          s_valid_new;
   reg          s_valid_we;
 
+  reg [9 : 0]  i_ctr_reg;
+  reg [9 : 0]  i_ctr_new;
+  reg          i_ctr_inc;
+  reg          i_ctr_rst;
+  reg          i_ctr_we;
+
 
   //----------------------------------------------------------------
   //----------------------------------------------------------------
@@ -105,11 +111,15 @@ module hc_core (
     begin
       if (reset_n = 0)
         begin
+          i_ctr_reg   <= 10'h000;
           s_reg       <= 32'h00000000;
           s_valid_reg <= 1'b0;
         end
       else
         begin
+          if (i_ctr_we)
+            i_ctr_reg <= i_ctr_new;
+
           if (P_we)
             P[P_addr] <= P_new;
 
@@ -129,10 +139,13 @@ module hc_core (
   //----------------------------------------------------------------
   always @*
     begin : cipher_update
+      reg  [8 : 0]  j;
       reg  [31 : 0] j_0;
       reg  [31 : 0] j_3;
       reg  [31 : 0] j_10;
       reg  [31 : 0] j_511;
+
+      j = i_reg[8 : 0];
 
       if (update)
         if (init_mode)
@@ -149,11 +162,33 @@ module hc_core (
   //----------------------------------------------------------------
   //----------------------------------------------------------------
   always @*
+    begin : i_ctr
+      i_ctr_new = 10'h000;
+      i_ctr_we  = 1'b0;
+
+      if (i_ctr_rst)
+        begin
+          i_ctr_new = 10'h000;
+          i_ctr_we  = 1'b1;
+        end
+
+      if (i_ctr_inc)
+        begin
+          i_ctr_new = i_ctr_reg + 1'b1;
+          i_ctr_we  = 1'b1;
+        end
+    end
+
+
+  //----------------------------------------------------------------
+  //----------------------------------------------------------------
+  always @*
     begin : hc_ctrl
       update    = 1'b0;
       init_mode = 1'b0;
+      i_ctr_rst = 1'b0;
+      i_ctr_inc = 1'b0;
     end
-
 
 endmodule // hc_core
 
