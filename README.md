@@ -20,6 +20,12 @@ implemented in modern FPGA devices. The P and Q tables are currently
 implemented as Verilog arrays and no specific work is done to ensure
 that block RAMs are actually used.
 
+This implementation will probably support both key lengths, but starts
+out with 128 bit key only.
+
+The core will have a top level wrapper with a 32-bit compliant
+interface. And testbenches for core and top level.
+
 
 ## Status ##
 
