@@ -40,12 +40,12 @@ module hc(
           input wire           clk,
           input wire           reset_n,
 
-           input wire           cs,
-           input wire           we,
-           input wire  [7 : 0]  address,
-           input wire  [31 : 0] write_data,
-           output wire [31 : 0] read_data
-          );
+          input wire           cs,
+          input wire           we,
+          input wire  [7 : 0]  address,
+          input wire  [31 : 0] write_data,
+          output wire [31 : 0] read_data
+         );
 
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
@@ -68,17 +68,14 @@ module hc(
   localparam ADDR_KEY0        = 8'h10;
   localparam ADDR_KEY7        = 8'h17;
 
-  localparam ADDR_BLOCK0      = 8'h20;
-  localparam ADDR_BLOCK3      = 8'h23;
+  localparam ADDR_IV0         = 8'h20;
+  localparam ADDR_IV7         = 8'h27;
 
-  localparam ADDR_RESULT0     = 8'h30;
-  localparam ADDR_RESULT1     = 8'h31;
-  localparam ADDR_RESULT2     = 8'h32;
-  localparam ADDR_RESULT3     = 8'h33;
+  localparam ADDR_RESULT      = 8'h40;
 
-  localparam CORE_NAME0       = 32'h61657320; // "aes "
+  localparam CORE_NAME0       = 32'h68632020; // "hc  "
   localparam CORE_NAME1       = 32'h20202020; // "    "
-  localparam CORE_VERSION     = 32'h302e3630; // "0.60"
+  localparam CORE_VERSION     = 32'h302e3031; // "0.01"
 
 
   //----------------------------------------------------------------
@@ -90,19 +87,18 @@ module hc(
   reg next_reg;
   reg next_new;
 
-  reg encdec_reg;
   reg keylen_reg;
   reg config_we;
-
-  reg [31 : 0] block_reg [0 : 3];
-  reg          block_we;
 
   reg [31 : 0] key_reg [0 : 7];
   reg          key_we;
 
-  reg [127 : 0] result_reg;
-  reg           valid_reg;
-  reg           ready_reg;
+  reg [31 : 0] iv_reg [0 : 7];
+  reg          iv_we;
+
+  reg [31 : 0] result_reg;
+  reg          valid_reg;
+  reg          ready_reg;
 
 
   //----------------------------------------------------------------
@@ -110,14 +106,13 @@ module hc(
   //----------------------------------------------------------------
   reg [31 : 0]   tmp_read_data;
 
-  wire           core_encdec;
   wire           core_init;
   wire           core_next;
   wire           core_ready;
   wire [255 : 0] core_key;
+  wire [255 : 0] core_iv;
   wire           core_keylen;
-  wire [127 : 0] core_block;
-  wire [127 : 0] core_result;
+  wire [31 : 0]  core_result;
   wire           core_valid;
 
 
@@ -129,11 +124,11 @@ module hc(
   assign core_key = {key_reg[0], key_reg[1], key_reg[2], key_reg[3],
                      key_reg[4], key_reg[5], key_reg[6], key_reg[7]};
 
-  assign core_block  = {block_reg[0], block_reg[1],
-                        block_reg[2], block_reg[3]};
+  assign core_iv = {iv_reg[0], iv_reg[1], iv_reg[2], iv_reg[3],
+                    iv_reg[4], iv_reg[5], iv_reg[6], iv_reg[7]};
+
   assign core_init   = init_reg;
   assign core_next   = next_reg;
-  assign core_encdec = encdec_reg;
   assign core_keylen = keylen_reg;
 
 
@@ -144,15 +139,14 @@ module hc(
                .clk(clk),
                .reset_n(reset_n),
 
-               .encdec(core_encdec),
-               .init(core_init),
-               .next(core_next),
+               .init(init_reg),
+               .next(next_reg),
                .ready(core_ready),
 
+               .iv(core_iv),
                .key(core_key),
-               .keylen(core_keylen),
+               .keylen(keylen_reg),
 
-               .block(core_block),
                .result(core_result),
                .result_valid(core_valid)
               );
@@ -171,18 +165,16 @@ module hc(
 
       if (!reset_n)
         begin
-          for (i = 0 ; i < 4 ; i = i + 1)
-            block_reg[i] <= 32'h0;
-
           for (i = 0 ; i < 8 ; i = i + 1)
-            key_reg[i] <= 32'h0;
+            begin
+              key_reg[i] <= 32'h0;
+              iv_reg[i]  <= 32'h0;
+            end
 
           init_reg   <= 0;
           next_reg   <= 0;
-          encdec_reg <= 0;
           keylen_reg <= 0;
-
-          result_reg <= 128'h0;
+          result_reg <= 32'h0;
           valid_reg  <= 0;
           ready_reg  <= 0;
         end
@@ -195,16 +187,13 @@ module hc(
           next_reg   <= next_new;
 
           if (config_we)
-            begin
-              encdec_reg <= write_data[CTRL_ENCDEC_BIT];
-              keylen_reg <= write_data[CTRL_KEYLEN_BIT];
-            end
+            keylen_reg <= write_data[CTRL_KEYLEN_BIT];
 
           if (key_we)
             key_reg[address[2 : 0]] <= write_data;
 
-          if (block_we)
-            block_reg[address[1 : 0]] <= write_data;
+          if (iv_we)
+            iv_reg[address[2 : 0]] <= write_data;
         end
     end // reg_update
 
@@ -220,6 +209,7 @@ module hc(
       next_new      = 0;
       config_we     = 0;
       key_we        = 0;
+      iv_we         = 0;
       block_we      = 0;
       tmp_read_data = 32'h0;
 
@@ -239,8 +229,8 @@ module hc(
               if ((address >= ADDR_KEY0) && (address <= ADDR_KEY7))
                 key_we = 1;
 
-              if ((address >= ADDR_BLOCK0) && (address <= ADDR_BLOCK3))
-                block_we = 1;
+              if ((address >= ADDR_IV0) && (address <= ADDR_IV7))
+                iv_we = 1;
             end // if (we)
 
           else
@@ -249,16 +239,16 @@ module hc(
                 ADDR_NAME0:   tmp_read_data = CORE_NAME0;
                 ADDR_NAME1:   tmp_read_data = CORE_NAME1;
                 ADDR_VERSION: tmp_read_data = CORE_VERSION;
-                ADDR_CTRL:    tmp_read_data = {28'h0, keylen_reg, encdec_reg, next_reg, init_reg};
+
+                ADDR_CTRL:    tmp_read_data = {29'h0, keylen_reg, encdec_reg, next_reg, init_reg};
                 ADDR_STATUS:  tmp_read_data = {30'h0, valid_reg, ready_reg};
+                ADDR_CONFIG:  tmp_read_data = {31'h0, keylen_reg};
+                ADDR_RESULT:  tmp_read_data = result_reg;
 
                 default:
                   begin
                   end
               endcase // case (address)
-
-              if ((address >= ADDR_RESULT0) && (address <= ADDR_RESULT3))
-                tmp_read_data = result_reg[(3 - (address - ADDR_RESULT0)) * 32 +: 32];
             end
         end
     end // addr_decoder
