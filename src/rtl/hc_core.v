@@ -5,7 +5,34 @@
 // Hardware implementation of the HC stream cipher.
 //
 //
-// Author: Joachim Strömbergson
+// Author: Joachim Strombergson
+// Copyright (c) 2017, Assured AB
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or
+// without modification, are permitted provided that the following
+// conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in
+//    the documentation and/or other materials provided with the
+//    distribution.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 //======================================================================
 
@@ -13,13 +40,15 @@ module hc_core (
                 input wire           clk,
                 input wire           reset_n,
 
-                input wire [127 : 0] key,
-                input wire [127 : 0] iv,
-
                 input wire           init,
                 input wire           next,
+                output wire          ready,
 
-                output wire [32 : 0] resul,
+                input wire [127 : 0] iv,
+                input wire [127 : 0] key,
+                input wire           keylen,
+
+                output wire [32 : 0] result,
                 output wire          result_valid
                );
 
@@ -41,7 +70,6 @@ module hc_core (
     end
   endfunction // f1
 
-
   function [31 : 0] f2(input [31 : 00] x);
     begin
       f2 = {x[16 : 00], x[31 : 17]} ^
@@ -49,7 +77,6 @@ module hc_core (
            {x[09 : 00], x[31 : 10]};
     end
   endfunction // f2
-
 
   function [31 : 0] g1(input [31 : 00] x,
                        input [31 : 00] y
@@ -61,7 +88,6 @@ module hc_core (
     end
   endfunction // g1
 
-
   function [31 : 0] g2(input [31 : 00] x,
                        input [31 : 00] y
                        input [31 : 00] z);
@@ -72,13 +98,11 @@ module hc_core (
     end
   endfunction // g2
 
-
   function [31 : 0] h1(input [31 : 00] x);
     begin
       h1 = Q[{1'b0, x[7 : 0]}] + Q[{1'b1, x[23 : 16]}];
     end
   endfunction // h1
-
 
   function [31 : 0] h1(input [31 : 00] x);
     begin
