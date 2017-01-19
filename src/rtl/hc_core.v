@@ -19,12 +19,19 @@ module hc_core (
                 input wire           init,
                 input wire           next,
 
-                output wire [32 : 0] s,
-                output wire          s_valid
+                output wire [32 : 0] resul,
+                output wire          result_valid
                );
 
 
   //----------------------------------------------------------------
+  // Internal constant and parameter definitions.
+  //----------------------------------------------------------------
+  localparam CTRL_IDLE = 3'h0
+
+
+  //----------------------------------------------------------------
+  // Internal functions.
   //----------------------------------------------------------------
   function [31 : 0] f1(input [31 : 00] x);
     begin
@@ -81,6 +88,7 @@ module hc_core (
 
 
   //----------------------------------------------------------------
+  // Registers
   //----------------------------------------------------------------
   reg [31 : 0] P [0 : 511];
   reg [31 : 0] P_new;
@@ -95,6 +103,7 @@ module hc_core (
   reg [31 : 0] s_reg;
   reg [31 : 0] s_new;
   reg          s_we;
+  reg          update_s;
 
   reg          s_valid_reg;
   reg          s_valid_new;
@@ -106,29 +115,39 @@ module hc_core (
   reg          i_ctr_rst;
   reg          i_ctr_we;
 
+  reg [2 : 0]  hc_core_ctrl_reg;
+  reg [2 : 0]  hc_core_ctrl_new;
+  reg          hc_core_ctrl_we;
+
 
   //----------------------------------------------------------------
+  // Wires.
   //----------------------------------------------------------------
-  reg update_s;
   reg update_state;
   reg init_mode;
 
 
   //----------------------------------------------------------------
+  // Asssignmengts to ports.
   //----------------------------------------------------------------
-  assign s       = s_reg;
-  assign s_valid = s_valid_reg;
+  assign result       = s_reg;
+  assign result_valid = s_valid_reg;
 
 
   //----------------------------------------------------------------
+  // reg_update
+
+  // Update functionality for all registers in the core.
+  // All registers are positive edge triggered with asynchronous
+  // active low reset.
   //----------------------------------------------------------------
-  always @ (posedge clk)
-    begin
-      if (reset_n = 0)
+  always @ (posedge clk or negedge reset_n)
+    begin : reg_update
+      if (!reset_n)
         begin
-          i_ctr_reg   <= 10'h000;
-          s_reg       <= 32'h00000000;
-          s_valid_reg <= 1'b0;
+          i_ctr_reg   <= 10'h0;
+          s_reg       <= 32'h0;
+          s_valid_reg <= 0;
         end
       else
         begin
@@ -254,35 +273,53 @@ module hc_core (
 
 
   //----------------------------------------------------------------
+  // i_ctr
+  //
+  // Monotonically increasing iteration counter with reset.
   //----------------------------------------------------------------
   always @*
     begin : i_ctr
-      i_ctr_new = 10'h000;
-      i_ctr_we  = 1'b0;
+      i_ctr_new = 10'h0;
+      i_ctr_we  = 0;
 
       if (i_ctr_rst)
-        begin
-          i_ctr_new = 10'h000;
-          i_ctr_we  = 1'b1;
-        end
+          i_ctr_we  = 1;
 
       if (i_ctr_inc)
         begin
           i_ctr_new = i_ctr_reg + 1'b1;
-          i_ctr_we  = 1'b1;
+          i_ctr_we  = 1;
         end
     end
 
 
   //----------------------------------------------------------------
+  // hc_ctrl
+  //
+  // Control FSM for the core.
   //----------------------------------------------------------------
   always @*
     begin : hc_ctrl
-      update_s     = 1'b0;
-      update_state = 1'b0;
-      init_mode    = 1'b0;
-      i_ctr_rst    = 1'b0;
-      i_ctr_inc    = 1'b0;
+      update_s         = 0;
+      update_state     = 0;
+      init_mode        = 0;
+      i_ctr_rst        = 0;
+      i_ctr_inc        = 0;
+      s_valid_new      = 0;
+      s_valid_we       = 0;
+      hc_core_ctrl_new = CTRL_IDLE;
+      hc_core_ctrl_we  = 0;
+
+      case (hc_core_ctrl_reg)
+        CTRL_IDLE:
+          begin
+          end
+
+        default:
+          begin
+          end
+      endcase // case (hc_core_ctrl_reg)
+
     end
 
 endmodule // hc_core
