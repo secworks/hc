@@ -53,10 +53,20 @@ import sys
 class HC():
     def __init__(self, verbose=False):
         self.verbose = verbose
+        self.P = [0] * 1024
+        self.S = [0] * 1024
+        self.i = 0
 
 
     def init(self, key, iv):
-        pass
+        self.key = key
+        self.iv = iv
+
+        if len(key) == 8:
+            self.iterations = 1024
+
+        else:
+            self.iiterations = 512
 
 
     def next(self):
