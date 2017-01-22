@@ -7,6 +7,8 @@
 # Simple, pure Python model of the HC stream cipher with
 # support for 128 and 256 bit keys.
 #
+# Note: Currently the model is only implementing HC-256.
+#
 #
 # Author: Joachim Strömbergson
 # Copyright (c) 2017, Assured AB
@@ -59,56 +61,83 @@ HC128_TSIZE = 512
 # ------------------------------------------------------------------
 class HC():
     def __init__(self, verbose=False):
+        # Allocate the internal state variables.
         self.verbose = verbose
         self.P = [0] * 1024
         self.Q = [0] * 1024
         self.i = 0
 
 
+    # Initialize the internal state given the key and iv.
     def init(self, key, iv):
-        self.key = key
-        self.iv = iv
+        W = [0] * 2560;
+        for i in range(8):
+            W[i] = key[i]
+            W[(i + 8)] = iv[i]
 
-        if len(key) == 8:
-            self.iterations = 1024
-        else:
-            self.iiterations = 512
+        for i in range(16, 2560):
+            W[i] = (self.f2(W[(i - 2)]) + W[(i - 7)] +
+                        self.f1(W[(i - 15)]) + W[(i - 15)] + i) & MAX_W32
+
+        for i in range(1024):
+            self.P[i] = W[(i + 512)]
+            self.Q[i] = W[(i + 1536)]
 
 
+    # Update internal state and return the next word.
     def next(self):
-        return 0
+        j = self.i % 1024
+        if (self.i % 2048) < 1024:
+            self.P[j] = (self.P[j] + self.P[self.subm(j, 10)]
+                             + self.g1(self.P[self.subm(j, 3)], self.P[self.subm(j, 1023)])) & MAX_W32
+            s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
+
+        else:
+            self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)]
+                             + self.g2(Q[self.subm(j, 3)], Q[self.subm(j, 1023)])) & MAX_W32
+            s = self.h2(self.Q[self.subm(j, 12)]) ^ self.Q[j]
+
+        self.i += 1
+        return s
 
 
+    # HC internal functions.
     def f1(self, x):
-        return rotr(x, 7) ^ rotr(x, 18) ^ rotr(x, 3)
+        return self.rotr(x, 7) ^ self.rotr(x, 18) ^ self.rotr(x, 3)
 
     def f2(self, x):
-        return rotr(x, 17) ^ rotr(x, 19) ^ rotr(x, 10)
+        return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.rotr(x, 10)
 
     def g1(self, x, y):
-        return (rotr(x, 10) ^ rotr(x, 23) + Q[((x ^ y) % 1024)]) & MAX_W32
+        return (self.rotr(x, 10) ^ self.rotr(x, 23) + self.Q[((x ^ y) % 1024)]) & MAX_W32
 
     def g2(self, x, y):
-        return (rotr(x, 10) ^ rotr(x, 23) + P[((x ^ y) % 1024)]) & MAX_W32
+        return (self.rotr(x, 10) ^ self.rotr(x, 23) + self.P[((x ^ y) % 1024)]) & MAX_W32
 
     def h1(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
-        return (Q[x0] + Q[(x1 + 256)] + Q[(x2 + 512)] + Q[(x3 + 768)]) & MAX_W32
+        return (self.Q[x0] + self.Q[(x1 + 256)] +
+                    self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & MAX_W32
 
     def h2(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
-        return (P[x0] + P[(x1 + 256)] + P[(x2 + 512)] + P[(x3 + 768)]) & MAX_W32
+        return (self.P[x0] + self.P[(x1 + 256)] +
+                    self.P[(x2 + 512)] + self.P[(x3 + 768)]) & MAX_W32
 
 
+    # Helper functions neeed to implement the HC functions.
     def rotr(self, w, b):
         return ((w >> b) | (w << (32 - b))) & 0xffffffff
 
-    def w2b(x):
+    def w2b(self, x):
         x0 = x >> 24
         x1 = x >> 16 & 0xff
         x2 = x >> 8 & 0xff
-        x2 = x & 0xff
+        x3 = x & 0xff
         return (x0, x1, x2, x3)
+
+    def subm(self, x, y):
+        return (x - y) % 1024
 
 
 # ------------------------------------------------------------------
@@ -128,7 +157,13 @@ def test_rotr():
 # Test the HC implementation with 128 and 256 bit keys.
 # ------------------------------------------------------------------
 def test_hc():
+    my_key = [0] * 8
+    my_iv = [0] * 8
     my_hc = HC()
+    my_hc.init(my_key, my_iv)
+
+    for i in range(16):
+        print("keystream %02d = 0x%08x" % (i, my_hc.next()))
 
 
 # ------------------------------------------------------------------
