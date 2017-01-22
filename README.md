@@ -4,12 +4,10 @@ Hardware implementation of the HC stream cipher.
 ## Introduction ##
 
 The HC stream cipher by Hongjun Wu is a very fast, state table based
-cipher. The HC-128 version of the cipher was selected as one of the
-ciphers in the eSTREAM portfolio.
-
-http://www.ecrypt.eu.org/stream/e2-hc128.html
-
-There is also a version of the cipher with 256 bit key.
+cipher. The [HC-128](http://www.ecrypt.eu.org/stream/e2-hc128.html)
+version of the cipher was selected as one of the ciphers in the eSTREAM
+portfolio. There is also
+[a version of the cipher with 256 bit key](https://eprint.iacr.org/2004/092.pdf).
 
 
 ## Hardware implementation ##
@@ -35,4 +33,9 @@ allocated.
 
 ## Status ##
 
-Initial version. Much stuff to do before it works. Here will be dragons.
+(2017-01-22)
+Started to work again on this core. There is now a top, a core,
+testbenches. There is also a Makefile for building sim targets and
+linting. The Python model development is progrerssing.
+
+The core is not ready for use.
