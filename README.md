@@ -26,6 +26,12 @@ out with 128 bit key only.
 The core will have a top level wrapper with a 32-bit compliant
 interface. And testbenches for core and top level.
 
+Note that the big tables P and Q are implemented with arrays and
+accessed asynchronously, not clocked memories. This means that for FPGAs
+these tables as separate registers, not block RAMs. This intentional
+since we want to implement HC on a single cycle/word. So 64k will be
+allocated.
+
 
 ## Status ##
 
