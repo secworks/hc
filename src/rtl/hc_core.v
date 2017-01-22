@@ -74,30 +74,6 @@ module hc_core (
     end
   endfunction // f2
 
-  function [31 : 0] g1 (input [31 : 0] x, input [31 : 0] y, input [31 : 0] z);
-    begin
-      g1 = {x[9 : 0], x[31 : 10]} ^ {y[22 : 0], y[31 : 23]} ^ {z[7 : 0], z[31 : 8]};
-    end
-  endfunction // g1
-
-  function [31 : 0] g2 (input [31 : 0] x, input [31 : 0] y, input [31 : 0] z);
-    begin
-      g2 = {x[22 : 0], x[31 : 23]} ^ {y[9 : 0], y[31 : 10]} ^ {z[24 : 0], z[31 : 25]};
-    end
-  endfunction // g2
-
-  function [31 : 0] h1 (input [31 : 0] x);
-    begin
-      h1 = Q[{1'b0, x[7 : 0]}] + Q[{1'b1, x[23 : 16]}];
-    end
-  endfunction // h1
-
-  function [31 : 0] h2 (input [31 : 0] x);
-    begin
-      h2 = P[{1'b0, x[7 : 0]}] + P[{1'b1, x[23 : 16]}];
-    end
-  endfunction // h2
-
 
   //----------------------------------------------------------------
   // Registers
