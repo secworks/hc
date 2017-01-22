@@ -44,11 +44,11 @@ module hc_core (
                 input wire           next,
                 output wire          ready,
 
-                input wire [127 : 0] iv,
-                input wire [127 : 0] key,
+                input wire [255 : 0] iv,
+                input wire [255 : 0] key,
                 input wire           keylen,
 
-                output wire [32 : 0] result,
+                output wire [31 : 0] result,
                 output wire          result_valid
                );
 
@@ -56,55 +56,43 @@ module hc_core (
   //----------------------------------------------------------------
   // Internal constant and parameter definitions.
   //----------------------------------------------------------------
-  localparam CTRL_IDLE = 3'h0
+  localparam CTRL_IDLE = 3'h0;
 
 
   //----------------------------------------------------------------
   // Internal functions.
   //----------------------------------------------------------------
-  function [31 : 0] f1(input [31 : 00] x);
+  function [31 : 0] f1 (input [31 : 0] x);
     begin
-      f1 = {x[06 : 00], x[31 : 07]} ^
-           {x[17 : 00], x[31 : 18]} ^
-           {x[02 : 00], x[31 : 03]};
+      f1 = {x[6 : 0], x[31 : 7]} ^ {x[17 : 0], x[31 : 18]} ^ {x[2 : 0], x[31 : 3]};
     end
   endfunction // f1
 
-  function [31 : 0] f2(input [31 : 00] x);
+  function [31 : 0] f2 (input [31 : 0] x);
     begin
-      f2 = {x[16 : 00], x[31 : 17]} ^
-           {x[18 : 00], x[31 : 19]} ^
-           {x[09 : 00], x[31 : 10]};
+      f2 = {x[16 : 0], x[31 : 17]} ^ {x[18 : 0], x[31 : 19]} ^ {x[9 : 0], x[31 : 10]};
     end
   endfunction // f2
 
-  function [31 : 0] g1(input [31 : 00] x,
-                       input [31 : 00] y
-                       input [31 : 00] z);
+  function [31 : 0] g1 (input [31 : 0] x, input [31 : 0] y, input [31 : 0] z);
     begin
-      g1 = {x[09 : 00], x[31 : 10]} ^
-           {y[22 : 00], y[31 : 23]} ^
-           {z[07 : 00], z[31 : 08]};
+      g1 = {x[9 : 0], x[31 : 10]} ^ {y[22 : 0], y[31 : 23]} ^ {z[7 : 0], z[31 : 8]};
     end
   endfunction // g1
 
-  function [31 : 0] g2(input [31 : 00] x,
-                       input [31 : 00] y
-                       input [31 : 00] z);
+  function [31 : 0] g2 (input [31 : 0] x, input [31 : 0] y, input [31 : 0] z);
     begin
-      g2 = {x[22 : 00], x[31 : 23]} ^
-           {y[09 : 00], y[31 : 10]} ^
-           {z[24 : 00], z[31 : 25]};
+      g2 = {x[22 : 0], x[31 : 23]} ^ {y[9 : 0], y[31 : 10]} ^ {z[24 : 0], z[31 : 25]};
     end
   endfunction // g2
 
-  function [31 : 0] h1(input [31 : 00] x);
+  function [31 : 0] h1 (input [31 : 0] x);
     begin
       h1 = Q[{1'b0, x[7 : 0]}] + Q[{1'b1, x[23 : 16]}];
     end
   endfunction // h1
 
-  function [31 : 0] h1(input [31 : 00] x);
+  function [31 : 0] h2 (input [31 : 0] x);
     begin
       h2 = P[{1'b0, x[7 : 0]}] + P[{1'b1, x[23 : 16]}];
     end
@@ -200,56 +188,56 @@ module hc_core (
   //----------------------------------------------------------------
   always @*
     begin : state_update
-      reg  [8 : 0] j_000;
-      reg  [8 : 0] j_003;
-      reg  [8 : 0] j_010;
-      reg  [8 : 0] j_511;
-
-      reg [31 : 0] P_000;
-      reg [31 : 0] P_002;
-      reg [31 : 0] P_010;
-      reg [31 : 0] P_511;
-
-      reg [31 : 0] Q_000;
-      reg [31 : 0] Q_002;
-      reg [31 : 0] Q_010;
-      reg [31 : 0] Q_511;
-
-      // TODO: These indices are quite probably wrong. Fix.
-      j_000 = i_reg[8 : 0];
-      j_003 = i_reg[8 : 0] - 3;
-      j_010 = i_reg[8 : 0] - 10;
-      j_511 = i_reg[8 : 0] - 511;
-
-      P_addr = i_reg[8 : 0];
-      Q_addr = i_reg[8 : 0];
-
-      P_000 = P[j_000];
-      P_003 = P[j_003];
-      P_010 = P[j_010];
-      P_511 = P[j_511];
-
-      Q_000 = Q[j_000];
-      Q_003 = Q[j_003];
-      Q_010 = Q[j_010];
-      Q_511 = Q[j_511];
-
-      P_new = P_000 + g1(P_003, P_010, P_511)
-      Q_new = Q_000 + g2(Q_003, Q_010, Q_511)
-
-      if (update)
-        begin
-          if (init_mode)
-            begin
-              // Init update.
-            end
-          else
-            begin
-              // Normal update.
-              Q_we = i_ctr_reg[9];
-              P_we = ~i_ctr_reg[9];
-            end
-        end
+//      reg  [8 : 0] j_000;
+//      reg  [8 : 0] j_003;
+//      reg  [8 : 0] j_010;
+//      reg  [8 : 0] j_511;
+//
+//      reg [31 : 0] P_000;
+//      reg [31 : 0] P_002;
+//      reg [31 : 0] P_010;
+//      reg [31 : 0] P_511;
+//
+//      reg [31 : 0] Q_000;
+//      reg [31 : 0] Q_002;
+//      reg [31 : 0] Q_010;
+//      reg [31 : 0] Q_511;
+//
+//      // TODO: These indices are quite probably wrong. Fix.
+//      j_000 = i_reg[8 : 0];
+//      j_003 = i_reg[8 : 0] - 3;
+//      j_010 = i_reg[8 : 0] - 10;
+//      j_511 = i_reg[8 : 0] - 511;
+//
+//      P_addr = i_reg[8 : 0];
+//      Q_addr = i_reg[8 : 0];
+//
+//      P_000 = P[j_000];
+//      P_003 = P[j_003];
+//      P_010 = P[j_010];
+//      P_511 = P[j_511];
+//
+//      Q_000 = Q[j_000];
+//      Q_003 = Q[j_003];
+//      Q_010 = Q[j_010];
+//      Q_511 = Q[j_511];
+//
+//      P_new = P_000 + g1(P_003, P_010, P_511);
+//      Q_new = Q_000 + g2(Q_003, Q_010, Q_511);
+//
+//      if (update)
+//        begin
+//          if (init_mode)
+//            begin
+//              // Init update.
+//            end
+//          else
+//            begin
+//              // Normal update.
+//              Q_we = i_ctr_reg[9];
+//              P_we = ~i_ctr_reg[9];
+//            end
+//        end
     end // block: state_update
 
 
@@ -270,29 +258,29 @@ module hc_core (
       reg [31 : 0] Q_012;
 
       // TODO: These indices are quite probably wrong. Fix.
-      j_000 = i_reg[8 : 0];
-      j_010 = i_reg[8 : 0] - 12;
-
-      P_000 = P[j_000];
-      P_511 = P[j_511];
-
-      Q_000 = Q[j_000];
-      Q_012 = Q[j_012];
-
-      P_new = P_000 + g1(P_003, P_010, P_511)
-      Q_new = Q_000 + g2(Q_003, Q_010, Q_511)
-
-      s_we = 1'b0;
-
-      if (update_s)
-        begin
-          s_we = 1'b1;
-
-          if (i_ctr_reg[9])
-            s_new = h2(Q_012) ^ Q_000;
-          else
-            s_new = h1(P_012) ^ P_000;
-        end
+//      j_000 = i_reg[8 : 0];
+//      j_010 = i_reg[8 : 0] - 12;
+//
+//      P_000 = P[j_000];
+//      P_511 = P[j_511];
+//
+//      Q_000 = Q[j_000];
+//      Q_012 = Q[j_012];
+//
+//      P_new = P_000 + g1(P_003, P_010, P_511);
+//      Q_new = Q_000 + g2(Q_003, Q_010, Q_511);
+//
+//      s_we = 1'b0;
+//
+//      if (update_s)
+//        begin
+//          s_we = 1'b1;
+//
+//          if (i_ctr_reg[9])
+//            s_new = h2(Q_012) ^ Q_000;
+//          else
+//            s_new = h1(P_012) ^ P_000;
+//        end
     end
 
 

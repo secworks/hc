@@ -210,7 +210,6 @@ module hc(
       config_we     = 0;
       key_we        = 0;
       iv_we         = 0;
-      block_we      = 0;
       tmp_read_data = 32'h0;
 
       if (cs)
@@ -240,7 +239,7 @@ module hc(
                 ADDR_NAME1:   tmp_read_data = CORE_NAME1;
                 ADDR_VERSION: tmp_read_data = CORE_VERSION;
 
-                ADDR_CTRL:    tmp_read_data = {29'h0, keylen_reg, encdec_reg, next_reg, init_reg};
+                ADDR_CTRL:    tmp_read_data = {30'h0, next_reg, init_reg};
                 ADDR_STATUS:  tmp_read_data = {30'h0, valid_reg, ready_reg};
                 ADDR_CONFIG:  tmp_read_data = {31'h0, keylen_reg};
                 ADDR_RESULT:  tmp_read_data = result_reg;
