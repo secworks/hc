@@ -46,15 +46,23 @@ import sys
 
 
 # -------------------------------------------------------------------
+# Defines.
+# -------------------------------------------------------------------
+MAX_W32 = 0xffffffff
+HC256_TSIZE = 1024
+HC128_TSIZE = 512
+
+
+# -------------------------------------------------------------------
 # HC
-#
 # The HC stream cipher class.
 # ------------------------------------------------------------------
 class HC():
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.P = [0] * 1024
-        self.S = [0] * 1024
+        self.Q = [0] * 1024
+        self.table_length
         self.i = 0
 
 
@@ -64,33 +72,57 @@ class HC():
 
         if len(key) == 8:
             self.iterations = 1024
-
+            self.self_length = 1024
         else:
             self.iiterations = 512
+            self.self_length = 512
 
 
     def next(self):
         return 0
 
-    def rotw32(self, w, r):
-        return (((w << r) % (2**32 -1)) | ( w >> (32 - r)))
 
+    def f1(self, x):
+        return rotw32(x, 7) ^ rotw32(x, 18) ^ rotw32(x, 3)
+
+    def f2(self, x):
+        return rotw32(x, 17) ^ rotw32(x, 19) ^ rotw32(x, 10)
+
+    def g1(self, x, y)
+        return (rotw32(x, 10) ^ rotw32(x, 23) + Q[((x ^ y) % 1024)]) & MAX_W32
+
+    def g2(self, x, y)
+        return (rotw32(x, 10) ^ rotw32(x, 23) + P[((x ^ y) % 1024)]) & MAX_W32
+
+    def h1(self, x)
+        (x0, x1, x2, x3) = self.w2b(x)
+        return (Q[x0] + Q[(x1 + 256)] + Q[(x2 + 512)] + Q[(x3 + 768)]) & MAX_W32
+
+    def h2(self, x)
+        (x0, x1, x2, x3) = self.w2b(x)
+        return (P[x0] + P[(x1 + 256)] + P[(x2 + 512)] + P[(x3 + 768)]) & MAX_W32
+
+
+    def rotw32(self, w, b):
+        return ((w << b) | (w >> (32 - b))) & 0xffffffff
+
+    def w2b(x)
+        x0 = x >> 24
+        x1 = x >> 16 & 0xff
+        x2 = x >> 8 & 0xff
+        x2 = x & 0xff
+        return (x0, x1, x2, x3)
 
 # ------------------------------------------------------------------
 # test_hc()
-#
 # Test the HC implementation with 128 and 256 bit keys.
 # ------------------------------------------------------------------
 def test_hc():
     my_hc = HC()
 
-    for i in range(33):
-        print("shift %02d steps: 0x%08x" % (i, my_hc.rotw32(i, 0x00000001)))
-
 
 # ------------------------------------------------------------------
 # main()
-#
 # If executed tests the ChaCha class using known test vectors.
 # ------------------------------------------------------------------
 def main():
