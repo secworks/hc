@@ -62,7 +62,6 @@ class HC():
         self.verbose = verbose
         self.P = [0] * 1024
         self.Q = [0] * 1024
-        self.table_length
         self.i = 0
 
 
@@ -72,10 +71,8 @@ class HC():
 
         if len(key) == 8:
             self.iterations = 1024
-            self.self_length = 1024
         else:
             self.iiterations = 512
-            self.self_length = 512
 
 
     def next(self):
@@ -83,35 +80,48 @@ class HC():
 
 
     def f1(self, x):
-        return rotw32(x, 7) ^ rotw32(x, 18) ^ rotw32(x, 3)
+        return rotr(x, 7) ^ rotr(x, 18) ^ rotr(x, 3)
 
     def f2(self, x):
-        return rotw32(x, 17) ^ rotw32(x, 19) ^ rotw32(x, 10)
+        return rotr(x, 17) ^ rotr(x, 19) ^ rotr(x, 10)
 
-    def g1(self, x, y)
-        return (rotw32(x, 10) ^ rotw32(x, 23) + Q[((x ^ y) % 1024)]) & MAX_W32
+    def g1(self, x, y):
+        return (rotr(x, 10) ^ rotr(x, 23) + Q[((x ^ y) % 1024)]) & MAX_W32
 
-    def g2(self, x, y)
-        return (rotw32(x, 10) ^ rotw32(x, 23) + P[((x ^ y) % 1024)]) & MAX_W32
+    def g2(self, x, y):
+        return (rotr(x, 10) ^ rotr(x, 23) + P[((x ^ y) % 1024)]) & MAX_W32
 
-    def h1(self, x)
+    def h1(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (Q[x0] + Q[(x1 + 256)] + Q[(x2 + 512)] + Q[(x3 + 768)]) & MAX_W32
 
-    def h2(self, x)
+    def h2(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (P[x0] + P[(x1 + 256)] + P[(x2 + 512)] + P[(x3 + 768)]) & MAX_W32
 
 
-    def rotw32(self, w, b):
-        return ((w << b) | (w >> (32 - b))) & 0xffffffff
+    def rotr(self, w, b):
+        return ((w >> b) | (w << (32 - b))) & 0xffffffff
 
-    def w2b(x)
+    def w2b(x):
         x0 = x >> 24
         x1 = x >> 16 & 0xff
         x2 = x >> 8 & 0xff
         x2 = x & 0xff
         return (x0, x1, x2, x3)
+
+
+# ------------------------------------------------------------------
+# test_rotr()
+# Test the hc help function rotr()
+# ------------------------------------------------------------------
+def test_rotr():
+    my_hc = HC()
+    print("Testing rotr help function.")
+    for i in range(33):
+        print("rotr %02d steps: 0x%08x" % (i, my_hc.rotr(0x00000001, i)))
+    print("")
+
 
 # ------------------------------------------------------------------
 # test_hc()
@@ -130,6 +140,7 @@ def main():
     print("==================================")
     print
 
+#    test_rotr()
     test_hc()
 
 
