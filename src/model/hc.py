@@ -63,6 +63,7 @@ class HC():
     def __init__(self, verbose=False):
         # Allocate the internal state variables.
         self.verbose = verbose
+        self.W = [0] * 2560
         self.P = [0] * 1024
         self.Q = [0] * 1024
         self.i = 0
@@ -70,18 +71,19 @@ class HC():
 
     # Initialize the internal state given the key and iv.
     def init(self, key, iv):
-        W = [0] * 2560;
         for i in range(8):
-            W[i] = key[i]
-            W[(i + 8)] = iv[i]
+            self.W[i] = key[i]
+            self.W[(i + 8)] = iv[i]
 
         for i in range(16, 2560):
-            W[i] = (self.f2(W[(i - 2)]) + W[(i - 7)] +
-                        self.f1(W[(i - 15)]) + W[(i - 15)] + i) & MAX_W32
+            self.W[i] = (self.f2(self.W[(i - 2)]) + self.W[(i - 7)] +
+                         self.f1(self.W[(i - 15)]) + self.W[(i - 15)] + i) & MAX_W32
+
+        # We shoudl the cipher update for 4096 iterations too!
 
         for i in range(1024):
-            self.P[i] = W[(i + 512)]
-            self.Q[i] = W[(i + 1536)]
+            self.P[i] = self.W[(i + 512)]
+            self.Q[i] = self.W[(i + 1536)]
 
 
     # Update internal state and return the next word.
@@ -139,6 +141,10 @@ class HC():
     def subm(self, x, y):
         return (x - y) % 1024
 
+    def dump_w(self):
+        for i in range(0, 128, 4):
+            print("W[%04d..%04d]: 0x%08x 0x%08x 0x%08x 0x%08x" %
+                      (i, i+3, self.W[i], self.W[i+1], self.W[i+2], self.W[i+3]))
 
 # ------------------------------------------------------------------
 # test_rotr()
@@ -159,8 +165,10 @@ def test_rotr():
 def test_hc():
     my_key = [0] * 8
     my_iv = [0] * 8
+
     my_hc = HC()
     my_hc.init(my_key, my_iv)
+    my_hc.dump_w()
 
     for i in range(16):
         print("keystream %02d = 0x%08x" % (i, my_hc.next()))
