@@ -48,19 +48,18 @@ import sys
 
 
 # -------------------------------------------------------------------
-# Defines.
-# -------------------------------------------------------------------
-MAX_W32 = 0xffffffff
-HC256_TSIZE = 1024
-HC128_TSIZE = 512
-DUMP_W_ELEMENTS = 4096
-
-# -------------------------------------------------------------------
 # HC
 # The HC stream cipher class.
 # ------------------------------------------------------------------
 class HC():
     def __init__(self, verbose=False):
+        # Constants
+        self.MAX_W32 = 0xffffffff
+        self.HC256_TSIZE = 1024
+        self.HC128_TSIZE = 512
+        self.DUMP_W_ELEMENTS = 2560
+        self.DUMP_PQ_ELEMENTS = 1024
+
         # Allocate the internal state variables.
         self.verbose = verbose
         self.W = [0] * 2560
@@ -77,7 +76,7 @@ class HC():
 
         for i in range(16, 2560):
             self.W[i] = (self.f2(self.W[(i - 2)]) + self.W[(i - 7)] +
-                         self.f1(self.W[(i - 15)]) + self.W[(i - 16)] + i) & MAX_W32
+                         self.f1(self.W[(i - 15)]) + self.W[(i - 16)] + i) & self.MAX_W32
 
         if self.verbose:
             self.dump_w()
@@ -85,6 +84,9 @@ class HC():
         for i in range(1024):
             self.P[i] = self.W[(i + 512)]
             self.Q[i] = self.W[(i + 1536)]
+
+        if self.verbose:
+            self.dump_pq()
 
         # We should run the cipher for 4096 iterations too.
 
@@ -94,12 +96,14 @@ class HC():
         j = self.i % 1024
         if (self.i % 2048) < 1024:
             self.P[j] = (self.P[j] + self.P[self.subm(j, 10)] +
-                         self.g1(self.P[self.subm(j, 3)], self.P[self.subm(j, 1023)])) & MAX_W32
+                         self.g1(self.P[self.subm(j, 3)],
+                         self.P[self.subm(j, 1023)])) & self.MAX_W32
             s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
         else:
             self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)] +
-                         self.g2(Q[self.subm(j, 3)], Q[self.subm(j, 1023)])) & MAX_W32
+                         self.g2(self.Q[self.subm(j, 3)],
+                         self.Q[self.subm(j, 1023)])) & MAX_W32
             s = self.h2(self.Q[self.subm(j, 12)]) ^ self.Q[j]
 
         self.i += 1
@@ -117,29 +121,29 @@ class HC():
 
     def g1(self, x, y):
         return (self.rotr(x, 10) ^ self.rotr(x, 23) +
-                self.Q[((x ^ y) % 1024)]) & MAX_W32
+                self.Q[((x ^ y) % 1024)]) & self.MAX_W32
 
 
     def g2(self, x, y):
         return (self.rotr(x, 10) ^ self.rotr(x, 23) +
-                self.P[((x ^ y) % 1024)]) & MAX_W32
+                self.P[((x ^ y) % 1024)]) & self.MAX_W32
 
 
     def h1(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (self.Q[x0] + self.Q[(x1 + 256)] +
-                self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & MAX_W32
+                self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & self.MAX_W32
 
 
     def h2(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (self.P[x0] + self.P[(x1 + 256)] +
-                self.P[(x2 + 512)] + self.P[(x3 + 768)]) & MAX_W32
+                self.P[(x2 + 512)] + self.P[(x3 + 768)]) & self.MAX_W32
 
 
     # Helper functions needed to implement the HC functions.
     def rotr(self, w, b):
-        return ((w >> b) | (w << (32 - b))) & MAX_W32
+        return ((w >> b) | (w << (32 - b))) & self.MAX_W32
 
 
     def shr(self, w, b):
@@ -160,9 +164,22 @@ class HC():
 
     def dump_w(self):
         print("State of the W array:")
-        for i in range(0, DUMP_W_ELEMENTS, 4):
+        for i in range(0, self.DUMP_W_ELEMENTS, 4):
             print("W[%04d..%04d]: 0x%08x 0x%08x 0x%08x 0x%08x" %
                       (i, i+3, self.W[i], self.W[i+1], self.W[i+2], self.W[i+3]))
+        print("")
+
+
+    def dump_pq(self):
+        print("State of the P array:")
+        for i in range(0, self.DUMP_PQ_ELEMENTS, 4):
+            print("P[%04d..%04d]: 0x%08x 0x%08x 0x%08x 0x%08x" %
+                      (i, i+3, self.P[i], self.P[i+1], self.P[i+2], self.P[i+3]))
+        print("")
+        print("State of the Q array:")
+        for i in range(0, self.DUMP_PQ_ELEMENTS, 4):
+            print("Q[%04d..%04d]: 0x%08x 0x%08x 0x%08x 0x%08x" %
+                      (i, i+3, self.Q[i], self.Q[i+1], self.Q[i+2], self.Q[i+3]))
         print("")
 
 
