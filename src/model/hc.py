@@ -53,7 +53,7 @@ import sys
 MAX_W32 = 0xffffffff
 HC256_TSIZE = 1024
 HC128_TSIZE = 512
-DUMP_W_ELEMENTS = 128
+DUMP_W_ELEMENTS = 4096
 
 # -------------------------------------------------------------------
 # HC
@@ -77,7 +77,7 @@ class HC():
 
         for i in range(16, 2560):
             self.W[i] = (self.f2(self.W[(i - 2)]) + self.W[(i - 7)] +
-                         self.f1(self.W[(i - 15)]) + self.W[(i - 15)] + i) & MAX_W32
+                         self.f1(self.W[(i - 15)]) + self.W[(i - 16)] + i) & MAX_W32
 
         if self.verbose:
             self.dump_w()
@@ -93,13 +93,13 @@ class HC():
     def next(self):
         j = self.i % 1024
         if (self.i % 2048) < 1024:
-            self.P[j] = (self.P[j] + self.P[self.subm(j, 10)]
-                             + self.g1(self.P[self.subm(j, 3)], self.P[self.subm(j, 1023)])) & MAX_W32
+            self.P[j] = (self.P[j] + self.P[self.subm(j, 10)] +
+                         self.g1(self.P[self.subm(j, 3)], self.P[self.subm(j, 1023)])) & MAX_W32
             s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
         else:
-            self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)]
-                             + self.g2(Q[self.subm(j, 3)], Q[self.subm(j, 1023)])) & MAX_W32
+            self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)] +
+                         self.g2(Q[self.subm(j, 3)], Q[self.subm(j, 1023)])) & MAX_W32
             s = self.h2(self.Q[self.subm(j, 12)]) ^ self.Q[j]
 
         self.i += 1
@@ -108,36 +108,42 @@ class HC():
 
     # Internal HC functions.
     def f1(self, x):
-        return self.rotr(x, 7) ^ self.rotr(x, 18) ^ self.rotr(x, 3)
+        return self.rotr(x, 7) ^ self.rotr(x, 18) ^ self.shr(x, 3)
 
 
     def f2(self, x):
-        return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.rotr(x, 10)
+        return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.shr(x, 10)
 
 
     def g1(self, x, y):
-        return (self.rotr(x, 10) ^ self.rotr(x, 23) + self.Q[((x ^ y) % 1024)]) & MAX_W32
+        return (self.rotr(x, 10) ^ self.rotr(x, 23) +
+                self.Q[((x ^ y) % 1024)]) & MAX_W32
 
 
     def g2(self, x, y):
-        return (self.rotr(x, 10) ^ self.rotr(x, 23) + self.P[((x ^ y) % 1024)]) & MAX_W32
+        return (self.rotr(x, 10) ^ self.rotr(x, 23) +
+                self.P[((x ^ y) % 1024)]) & MAX_W32
 
 
     def h1(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (self.Q[x0] + self.Q[(x1 + 256)] +
-                    self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & MAX_W32
+                self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & MAX_W32
 
 
     def h2(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (self.P[x0] + self.P[(x1 + 256)] +
-                    self.P[(x2 + 512)] + self.P[(x3 + 768)]) & MAX_W32
+                self.P[(x2 + 512)] + self.P[(x3 + 768)]) & MAX_W32
 
 
     # Helper functions needed to implement the HC functions.
     def rotr(self, w, b):
-        return ((w >> b) | (w << (32 - b))) & 0xffffffff
+        return ((w >> b) | (w << (32 - b))) & MAX_W32
+
+
+    def shr(self, w, b):
+        return (w >> b)
 
 
     def w2b(self, x):
