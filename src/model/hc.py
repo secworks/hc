@@ -53,7 +53,7 @@ import sys
 MAX_W32 = 0xffffffff
 HC256_TSIZE = 1024
 HC128_TSIZE = 512
-
+DUMP_W_ELEMENTS = 128
 
 # -------------------------------------------------------------------
 # HC
@@ -79,11 +79,14 @@ class HC():
             self.W[i] = (self.f2(self.W[(i - 2)]) + self.W[(i - 7)] +
                          self.f1(self.W[(i - 15)]) + self.W[(i - 15)] + i) & MAX_W32
 
-        # We shoudl the cipher update for 4096 iterations too!
+        if self.verbose:
+            self.dump_w()
 
         for i in range(1024):
             self.P[i] = self.W[(i + 512)]
             self.Q[i] = self.W[(i + 1536)]
+
+        # We should run the cipher for 4096 iterations too.
 
 
     # Update internal state and return the next word.
@@ -103,23 +106,28 @@ class HC():
         return s
 
 
-    # HC internal functions.
+    # Internal HC functions.
     def f1(self, x):
         return self.rotr(x, 7) ^ self.rotr(x, 18) ^ self.rotr(x, 3)
+
 
     def f2(self, x):
         return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.rotr(x, 10)
 
+
     def g1(self, x, y):
         return (self.rotr(x, 10) ^ self.rotr(x, 23) + self.Q[((x ^ y) % 1024)]) & MAX_W32
 
+
     def g2(self, x, y):
         return (self.rotr(x, 10) ^ self.rotr(x, 23) + self.P[((x ^ y) % 1024)]) & MAX_W32
+
 
     def h1(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
         return (self.Q[x0] + self.Q[(x1 + 256)] +
                     self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & MAX_W32
+
 
     def h2(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
@@ -127,9 +135,10 @@ class HC():
                     self.P[(x2 + 512)] + self.P[(x3 + 768)]) & MAX_W32
 
 
-    # Helper functions neeed to implement the HC functions.
+    # Helper functions needed to implement the HC functions.
     def rotr(self, w, b):
         return ((w >> b) | (w << (32 - b))) & 0xffffffff
+
 
     def w2b(self, x):
         x0 = x >> 24
@@ -138,13 +147,18 @@ class HC():
         x3 = x & 0xff
         return (x0, x1, x2, x3)
 
+
     def subm(self, x, y):
         return (x - y) % 1024
 
+
     def dump_w(self):
-        for i in range(0, 128, 4):
+        print("State of the W array:")
+        for i in range(0, DUMP_W_ELEMENTS, 4):
             print("W[%04d..%04d]: 0x%08x 0x%08x 0x%08x 0x%08x" %
                       (i, i+3, self.W[i], self.W[i+1], self.W[i+2], self.W[i+3]))
+        print("")
+
 
 # ------------------------------------------------------------------
 # test_rotr()
@@ -166,9 +180,8 @@ def test_hc():
     my_key = [0] * 8
     my_iv = [0] * 8
 
-    my_hc = HC()
+    my_hc = HC(verbose=True)
     my_hc.init(my_key, my_iv)
-    my_hc.dump_w()
 
     for i in range(16):
         print("keystream %02d = 0x%08x" % (i, my_hc.next()))
