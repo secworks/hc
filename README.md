@@ -32,13 +32,15 @@ allocated.
 
 
 ## Status ##
-*** (2017-01-29) ***
+***(2017-01-29)***
+
 Debugging the Python model. Right now the initial table W and the state
 arrays P and Q are initialized correctly before running the cipher for
 4096 cycles.
 
 
-*** (2017-01-22) ***
+***(2017-01-22)***
+
 Started to work again on this core. There is now a top, a core,
 testbenches. There is also a Makefile for building sim targets and
 linting. The Python model development is progrerssing.
