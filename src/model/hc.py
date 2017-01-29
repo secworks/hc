@@ -86,9 +86,15 @@ class HC():
             self.Q[i] = self.W[(i + 1536)]
 
         if self.verbose:
+            print("P and Q before 4096 internal updates.")
             self.dump_pq()
 
-        # We should run the cipher for 4096 iterations too.
+        for i in range(4096):
+            self.next()
+
+        if self.verbose:
+            print("P and Q before 4096 internal updates.")
+            self.dump_pq()
 
 
     # Update internal state and return the next word.
@@ -103,7 +109,7 @@ class HC():
         else:
             self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)] +
                          self.g2(self.Q[self.subm(j, 3)],
-                         self.Q[self.subm(j, 1023)])) & MAX_W32
+                         self.Q[self.subm(j, 1023)])) & self.MAX_W32
             s = self.h2(self.Q[self.subm(j, 12)]) ^ self.Q[j]
 
         self.i += 1
