@@ -57,8 +57,8 @@ class HC():
         self.MAX_W32 = 0xffffffff
         self.HC256_TSIZE = 1024
         self.HC128_TSIZE = 512
-        self.DUMP_W_ELEMENTS = 2560
-        self.DUMP_PQ_ELEMENTS = 1024
+        self.DUMP_W_ELEMENTS = 64
+        self.DUMP_PQ_ELEMENTS = 64
 
         # Allocate the internal state variables.
         self.verbose = verbose
@@ -93,7 +93,7 @@ class HC():
             self.next()
 
         if self.verbose:
-            print("P and Q before 4096 internal updates.")
+            print("P and Q after 4096 internal updates.")
             self.dump_pq()
 
 
