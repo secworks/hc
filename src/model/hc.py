@@ -106,6 +106,10 @@ class HC():
                          self.P[self.subm(j, 1023)])) & self.MAX_W32
             s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
+            if self.verbose:
+                if j < 64:
+                    print("P[%03d] = 0x%08x" % (j, self.P[j]))
+
         else:
             self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)] +
                          self.g2(self.Q[self.subm(j, 3)],
@@ -123,7 +127,6 @@ class HC():
 
     def f2(self, x):
         return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.shr(x, 10)
-
 
     def g1(self, x, y):
         return (self.rotr(x, 10) ^ self.rotr(x, 23) +
