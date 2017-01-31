@@ -101,6 +101,10 @@ class HC():
     def next(self):
         j = self.i % 1024
         if (self.i % 2048) < 1024:
+            if self.verbose:
+                print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
+                          (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
+
             self.P[j] = (self.P[j] + self.P[self.subm(j, 10)] +
                          self.g1(self.P[self.subm(j, 3)],
                          self.P[self.subm(j, 1023)])) & self.MAX_W32
