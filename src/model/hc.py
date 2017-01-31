@@ -105,14 +105,18 @@ class HC():
                 print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
                           (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
 
+                print("x[i] = 0x%08x, x[i3] = 0x%08x, x[i10] = 0x%08x, x[i1023] = 0x%08x" %
+                          (self.P[j], self.P[self.subm(j, 3)],
+                           self.P[self.subm(j, 10)], self.P[self.subm(j, 1023)]))
+
             self.P[j] = (self.P[j] + self.P[self.subm(j, 10)] +
                          self.g1(self.P[self.subm(j, 3)],
                          self.P[self.subm(j, 1023)])) & self.MAX_W32
-            s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
             if self.verbose:
-                if j < 64:
-                    print("P[%03d] = 0x%08x" % (j, self.P[j]))
+                print("New x[i] = 0x%08x" % self.P[j])
+
+            s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
         else:
             self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)] +
