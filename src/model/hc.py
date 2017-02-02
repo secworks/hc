@@ -115,6 +115,7 @@ class HC():
 
             if self.verbose:
                 print("New x[i] = 0x%08x" % self.P[j])
+                print("")
 
             s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
@@ -137,8 +138,10 @@ class HC():
         return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.shr(x, 10)
 
     def g1(self, x, y):
-        result = (self.rotr(x, 10) ^ self.rotr(x, 23) +
-                  self.Q[((x ^ y) % 1024)]) & self.MAX_W32
+        qval = self.Q[((x ^ y) % 1024)]
+        rot10 = self.rotr(x, 10)
+        rot23 = self.rotr(x, 23)
+        result = ((rot10 ^ rot23) + qval) & self.MAX_W32
         if self.verbose:
             print("In g1. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
         return result
