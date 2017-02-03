@@ -144,6 +144,9 @@ class HC():
         result = ((rot10 ^ rot23) + qval) & self.MAX_W32
         if self.verbose:
             print("In g1. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
+            print("x ^ y = 0x%08x, q[x^y] = 0x%08x, rot10 = 0x%08x, rot23 = 0x%08x" %
+                  ((x ^ y), qval, rot10, rot23))
+
         return result
 
 
