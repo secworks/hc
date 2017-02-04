@@ -140,7 +140,7 @@ class HC():
     def g1(self, x, y):
         qval = self.Q[((x ^ y) % 1024)]
         rot10 = self.rotr(x, 10)
-        rot23 = self.rotr(x, 23)
+        rot23 = self.rotr(y, 23)
         result = ((rot10 ^ rot23) + qval) & self.MAX_W32
         if self.verbose:
             print("In g1. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
