@@ -151,7 +151,7 @@ class HC():
 
 
     def g2(self, x, y):
-        result = (self.rotr(x, 10) ^ self.rotr(x, 23) +
+        result = (self.rotr(x, 10) ^ self.rotr(y, 23) +
                   self.P[((x ^ y) % 1024)]) & self.MAX_W32
         if self.verbose:
             print("In g2. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
