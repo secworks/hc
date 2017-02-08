@@ -105,7 +105,7 @@ class HC():
                 print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
                           (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
 
-                print("x[i] = 0x%08x, x[i3] = 0x%08x, x[i10] = 0x%08x, x[i1023] = 0x%08x" %
+                print("In P: x[i] = 0x%08x, x[i3] = 0x%08x, x[i10] = 0x%08x, x[i1023] = 0x%08x" %
                           (self.P[j], self.P[self.subm(j, 3)],
                            self.P[self.subm(j, 10)], self.P[self.subm(j, 1023)]))
 
@@ -120,9 +120,22 @@ class HC():
             s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
         else:
+            if self.verbose:
+                print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
+                          (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
+
+                print("In Q: x[i] = 0x%08x, x[i3] = 0x%08x, x[i10] = 0x%08x, x[i1023] = 0x%08x" %
+                          (self.Q[j], self.Q[self.subm(j, 3)],
+                           self.Q[self.subm(j, 10)], self.Q[self.subm(j, 1023)]))
+
             self.Q[j] = (self.Q[j] + self.Q[self.subm(j, 10)] +
                          self.g2(self.Q[self.subm(j, 3)],
                          self.Q[self.subm(j, 1023)])) & self.MAX_W32
+
+            if self.verbose:
+                print("New x[i] = 0x%08x" % self.Q[j])
+                print("")
+
             s = self.h2(self.Q[self.subm(j, 12)]) ^ self.Q[j]
 
         self.i += 1
