@@ -121,6 +121,7 @@ class HC():
 
         else:
             if self.verbose:
+                print("bajs!")
                 print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
                           (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
 
@@ -164,8 +165,10 @@ class HC():
 
 
     def g2(self, x, y):
-        result = (self.rotr(x, 10) ^ self.rotr(y, 23) +
-                  self.P[((x ^ y) % 1024)]) & self.MAX_W32
+        pval = self.P[((x ^ y) % 1024)]
+        rot10 = self.rotr(x, 10)
+        rot23 = self.rotr(y, 23)
+        result = ((rot10 ^ rot23) + pval) & self.MAX_W32
         if self.verbose:
             print("In g2. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
         return result
