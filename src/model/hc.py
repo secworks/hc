@@ -52,7 +52,7 @@ import sys
 # The HC stream cipher class.
 # ------------------------------------------------------------------
 class HC():
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=0):
         # Constants
         self.MAX_W32 = 0xffffffff
         self.HC256_TSIZE = 1024
@@ -78,21 +78,21 @@ class HC():
             self.W[i] = (self.f2(self.W[(i - 2)]) + self.W[(i - 7)] +
                          self.f1(self.W[(i - 15)]) + self.W[(i - 16)] + i) & self.MAX_W32
 
-        if self.verbose:
+        if self.verbose > 0:
             self.dump_w()
 
         for i in range(1024):
             self.P[i] = self.W[(i + 512)]
             self.Q[i] = self.W[(i + 1536)]
 
-        if self.verbose:
+        if self.verbose > 0:
             print("P and Q before 4096 internal updates.")
             self.dump_pq()
 
         for i in range(4096):
             self.next()
 
-        if self.verbose:
+        if self.verbose > 0:
             print("P and Q after 4096 internal updates.")
             self.dump_pq()
 
@@ -101,7 +101,7 @@ class HC():
     def next(self):
         j = self.i % 1024
         if (self.i % 2048) < 1024:
-            if self.verbose:
+            if self.verbose > 1:
                 print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
                           (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
 
@@ -113,15 +113,14 @@ class HC():
                          self.g1(self.P[self.subm(j, 3)],
                          self.P[self.subm(j, 1023)])) & self.MAX_W32
 
-            if self.verbose:
+            if self.verbose > 1:
                 print("New x[i] = 0x%08x" % self.P[j])
                 print("")
 
             s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
 
         else:
-            if self.verbose:
-                print("bajs!")
+            if self.verbose > 1:
                 print("i = %04d, i3 = %04d, i10 = %04d, i1023 = %04d" %
                           (j, self.subm(j, 3), self.subm(j, 10), self.subm(j, 1023)))
 
@@ -133,7 +132,7 @@ class HC():
                          self.g2(self.Q[self.subm(j, 3)],
                          self.Q[self.subm(j, 1023)])) & self.MAX_W32
 
-            if self.verbose:
+            if self.verbose > 1:
                 print("New x[i] = 0x%08x" % self.Q[j])
                 print("")
 
@@ -151,16 +150,16 @@ class HC():
     def f2(self, x):
         return self.rotr(x, 17) ^ self.rotr(x, 19) ^ self.shr(x, 10)
 
+
     def g1(self, x, y):
         qval = self.Q[((x ^ y) % 1024)]
         rot10 = self.rotr(x, 10)
         rot23 = self.rotr(y, 23)
         result = ((rot10 ^ rot23) + qval) & self.MAX_W32
-        if self.verbose:
+        if self.verbose > 1:
             print("In g1. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
             print("x ^ y = 0x%08x, q[x^y] = 0x%08x, rot10 = 0x%08x, rot23 = 0x%08x" %
                   ((x ^ y), qval, rot10, rot23))
-
         return result
 
 
@@ -169,8 +168,10 @@ class HC():
         rot10 = self.rotr(x, 10)
         rot23 = self.rotr(y, 23)
         result = ((rot10 ^ rot23) + pval) & self.MAX_W32
-        if self.verbose:
+        if self.verbose > 1:
             print("In g2. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
+            print("x ^ y = 0x%08x, p[x^y] = 0x%08x, rot10 = 0x%08x, rot23 = 0x%08x" %
+                  ((x ^ y), pval, rot10, rot23))
         return result
 
 
@@ -248,7 +249,7 @@ def test_hc():
     my_key = [0] * 8
     my_iv = [0] * 8
 
-    my_hc = HC(verbose=True)
+    my_hc = HC(verbose=1)
     my_hc.init(my_key, my_iv)
 
     for i in range(16):
