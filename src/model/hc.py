@@ -115,9 +115,16 @@ class HC():
 
             if self.verbose > 1:
                 print("New x[i] = 0x%08x" % self.P[j])
-                print("")
 
-            s = self.h1(self.P[self.subm(j, 12)]) ^ self.P[j]
+            j12 = self.subm(j, 12)
+            p12 = self.P[j12]
+            h1_12 = self.h1(p12)
+            s = h1_12 ^ self.P[j]
+
+            if self.verbose > 1:
+                print("j12 = %04d p12 = 0x%08x, P[j] = 0x%08x, h1_12 = 0x%08x, s = 0x%08x" %
+                          (j12, p12, self.P[j], h1_12, s))
+                print("")
 
         else:
             if self.verbose > 1:
@@ -134,9 +141,17 @@ class HC():
 
             if self.verbose > 1:
                 print("New x[i] = 0x%08x" % self.Q[j])
+
+            j12 = self.subm(j, 12)
+            q12 = self.Q[j12]
+            h2_12 = self.h2(q12)
+            s = h2_12 ^ self.Q[j]
+
+            if self.verbose > 1:
+                print("j12 = %04d p12 = 0x%08x, Q[j] = 0x%08x, h2_12 = 0x%08x, s = 0x%08x" %
+                          (j12, q12, self.Q[j], h2_12, s))
                 print("")
 
-            s = self.h2(self.Q[self.subm(j, 12)]) ^ self.Q[j]
 
         self.i += 1
         return s
@@ -249,9 +264,10 @@ def test_hc():
     my_key = [0] * 8
     my_iv = [0] * 8
 
-    my_hc = HC(verbose=1)
+    my_hc = HC(verbose=2)
     my_hc.init(my_key, my_iv)
 
+    print("Init done. Now generating values.")
     for i in range(16):
         print("keystream %02d = 0x%08x" % (i, my_hc.next()))
 
