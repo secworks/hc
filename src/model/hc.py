@@ -172,7 +172,7 @@ class HC():
         rot23 = self.rotr(y, 23)
         result = ((rot10 ^ rot23) + qval) & self.MAX_W32
         if self.verbose > 1:
-            print("In g1. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
+            print("In g1: x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
             print("x ^ y = 0x%08x, q[x^y] = 0x%08x, rot10 = 0x%08x, rot23 = 0x%08x" %
                   ((x ^ y), qval, rot10, rot23))
         return result
@@ -184,7 +184,7 @@ class HC():
         rot23 = self.rotr(y, 23)
         result = ((rot10 ^ rot23) + pval) & self.MAX_W32
         if self.verbose > 1:
-            print("In g2. x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
+            print("In g2: x = 0x%08x, y = 0x%08x, res = 0x%08x" % (x, y, result))
             print("x ^ y = 0x%08x, p[x^y] = 0x%08x, rot10 = 0x%08x, rot23 = 0x%08x" %
                   ((x ^ y), pval, rot10, rot23))
         return result
@@ -192,14 +192,28 @@ class HC():
 
     def h1(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
-        return (self.Q[x0] + self.Q[(x1 + 256)] +
-                self.Q[(x2 + 512)] + self.Q[(x3 + 768)]) & self.MAX_W32
+        qx0 = self.Q[x0]
+        qx1 = self.Q[(x1 + 256)]
+        qx2 = self.Q[(x2 + 512)]
+        qx3 = self.Q[(x3 + 768)]
+        h1_res = (qx0 + qx1 + qx2 + qx3) & self.MAX_W32
+        if self.verbose > 1:
+            print("In h1: x = 0x%08x, xb = %02x %02x %02x %02x, qx0 = 0x%08x, qx1 = 0x%08x, qx2 = 0x%08x, qx3 = 0x%08x, res = 0x%08x" %
+                  (x, x0, x1, x2, x3, qx0, qx1, qx2, qx2, h1_res))
+        return h1_res
 
 
     def h2(self, x):
         (x0, x1, x2, x3) = self.w2b(x)
-        return (self.P[x0] + self.P[(x1 + 256)] +
-                self.P[(x2 + 512)] + self.P[(x3 + 768)]) & self.MAX_W32
+        px0 = self.P[x0]
+        px1 = self.P[(x1 + 256)]
+        px2 = self.P[(x2 + 512)]
+        px3 = self.P[(x3 + 768)]
+        h2_res = (px0 + px1 + px2 + px3) & self.MAX_W32
+        if self.verbose > 1:
+            print("In h2: x = 0x%08x, xb = %02x %02x %02x %02x, px0 = 0x%08x, px1 = 0x%08x, px2 = 0x%08x, px3 = 0x%08x, res = 0x%08x" %
+                  (x, x0, x1, x2, x3, px0, px1, px2, px2, h2_res))
+        return h2_res
 
 
     # Helper functions needed to implement the HC functions.
