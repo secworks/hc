@@ -44,11 +44,11 @@ TOP_SRC=../src/rtl/hc.v $(CORE_SRC)
 TB_TOP_SRC =../src/tb/tb_hc.v
 
 
-# Tools
 CC=iverilog
 CC_FLAGS= -Wall
+
 LINT=verilator
-LINT_FLAGS = +1364-2001ext+ --lint-only -Wall
+LINT_FLAGS = +1364-2001ext+ --lint-only -Wall -Wno-fatal -Wno-DECLFILENAME
 
 
 # Targets
@@ -72,7 +72,7 @@ sim-core: core.sim
 
 
 lint:	$(TOP_SRC)
-	verilator $(LINT_FLAGS) $(TOP_SRC)
+	$(LINT) $(LINT_FLAGS) $(TOP_SRC)
 
 
 clean:
@@ -86,7 +86,6 @@ help:
 	@echo "Supported targets:"
 	@echo "------------------"
 	@echo "all:        Build all simulation targets."
-	@echo "lint:       Lint all rtl source files."
 	@echo "top.sim:    Build top level simulation target."
 	@echo "core.sim:   Build core level simulation target."
 	@echo "sim-top:    Run top level simulation."
